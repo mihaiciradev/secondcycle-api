@@ -24,7 +24,10 @@ if config.config_file_name is not None:
 
 target_metadata = Base.metadata
 
-config.set_main_option("sqlalchemy.url", get_settings().database_url_direct)
+# The test harness sets sqlalchemy.url explicitly (to the test branch). Only
+# fall back to the app's direct URL when no override was provided.
+if not config.get_main_option("sqlalchemy.url"):
+    config.set_main_option("sqlalchemy.url", get_settings().database_url_direct)
 
 
 def run_migrations_offline() -> None:
@@ -58,6 +61,8 @@ async def run_migrations_online() -> None:
         configuration,
         prefix="sqlalchemy.",
         poolclass=pool.NullPool,
+        # Neon requires TLS; asyncpg enables it via connect_args, not the URL.
+        connect_args={"ssl": True},
     )
     async with connectable.connect() as connection:
         await connection.run_sync(do_run_migrations)

@@ -28,6 +28,10 @@ def _create_engine() -> AsyncEngine:
         connect_args={
             # Required for PgBouncer transaction-mode pooling.
             "statement_cache_size": 0,
+            # Neon requires TLS. asyncpg does not understand libpq's
+            # sslmode/channel_binding query params, so we strip those from the
+            # URL and enable SSL here instead.
+            "ssl": True,
         },
     )
 
